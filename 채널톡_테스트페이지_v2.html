@@ -48,7 +48,7 @@
     .divider { border: none; border-top: 1px solid #f0f0f0; margin: 24px 0; }
     label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
     .hint { font-size: 11px; color: #bbb; margin-top: -4px; margin-bottom: 12px; }
-    input, select {
+    input {
       width: 100%; padding: 10px 14px;
       border: 1.5px solid #e8e8e8;
       border-radius: 8px; font-size: 14px;
@@ -56,7 +56,7 @@
       transition: border-color 0.2s;
       color: #1a1a1a;
     }
-    input:focus, select:focus { border-color: #5b4de0; }
+    input:focus { border-color: #5b4de0; }
     input::placeholder { color: #ccc; }
     .branch-grid {
       display: grid;
@@ -88,9 +88,7 @@
       display: none; align-items: center; justify-content: center;
     }
     .branch-item.selected .check { display: flex; }
-    .check::after {
-      content: '✓'; color: white; font-size: 10px; font-weight: 700;
-    }
+    .check::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; }
     .selected-summary {
       background: #f7f6ff;
       border: 1.5px solid #dddaf8;
@@ -112,7 +110,6 @@
       margin-top: 4px;
     }
     button:hover { background: #4a3cc7; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
     .status {
       margin-top: 14px; padding: 12px 16px;
       border-radius: 8px; font-size: 13px;
@@ -141,7 +138,7 @@
 <div class="card">
   <div class="badge">DEV TEST</div>
   <h2>채널톡 프로필 주입 테스트</h2>
-  <p class="subtitle">branchid · contractid를 고객 프로필에 주입하고 워크플로우로 이동해요.</p>
+  <p class="subtitle">branchid · contractid를 고객 프로필에 주입하고 채팅을 열어요.</p>
 
   <div class="section-title">지점 선택 (branchid)</div>
   <div class="branch-grid" id="branchGrid"></div>
@@ -158,27 +155,29 @@
   <input type="text" id="userName" placeholder="예: 테스트입주자" />
 
   <label>워크플로우 URL</label>
-  <p class="hint">채널톡 대시보드 → 워크플로우 → 해당 지점 링크</p>
+  <p class="hint">지점 선택 시 자동 입력됩니다. URL이 없는 지점은 직접 입력해주세요.</p>
   <input type="text" id="workflowUrl" placeholder="https://gochongmu-management.channel.io/workflows/..." />
 
   <div class="profile-preview" id="profilePreview"></div>
 
-  <button onclick="initAndOpen()" id="openBtn">채널톡 열기</button>
+  <button onclick="initAndOpen()">채널톡 열기</button>
   <div class="status" id="status"></div>
 </div>
 
 <script>
   const PLUGIN_KEY = '7a082bba-9312-490d-9ddc-fa89524de5f4';
 
+  // ── 지점 목록 (추가/수정 시 여기만 편집) ──────────────────────
   const BRANCHES = [
-    { id: 45, name: '공감맨션' },
-    { id: 33, name: '픽셀하우스 봉천점' },
-    { id: 40, name: '휴먼하우스' },
-    { id: 34, name: '삼정스테이' },
-    { id: 53, name: '스테이23 교대점' },
-    { id: 59, name: '아더포레 신촌점' },
-    { id: 68, name: '스르르스테이 동두천점' },
+    { id: 45, name: '공감맨션',             url: 'https://gochongmu-management.channel.io/workflows/819670' },
+    { id: 33, name: '픽셀하우스 봉천점',    url: '' },
+    { id: 40, name: '휴먼하우스',           url: '' },
+    { id: 34, name: '삼정스테이',           url: '' },
+    { id: 53, name: '스테이23 교대점',      url: '' },
+    { id: 59, name: '아더포레 신촌점',      url: '' },
+    { id: 68, name: '스르르스테이 동두천점', url: '' },
   ];
+  // ────────────────────────────────────────────────────────────────
 
   let selectedBranchId = null;
 
@@ -203,6 +202,8 @@
     const summary = document.getElementById('selectedSummary');
     summary.className = 'selected-summary visible';
     summary.innerHTML = `선택된 지점: <strong>${name}</strong> (branchid: <strong>${id}</strong>)`;
+    const branch = BRANCHES.find(b => b.id === id);
+    document.getElementById('workflowUrl').value = branch?.url || '';
     updatePreview();
   }
 
