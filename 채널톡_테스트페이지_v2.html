@@ -37,7 +37,6 @@
     }
     h2 { margin: 0 0 4px; font-size: 20px; color: #1a1a1a; }
     .subtitle { margin: 0 0 28px; font-size: 13px; color: #999; }
-
     .section-title {
       font-size: 11px;
       font-weight: 700;
@@ -47,10 +46,8 @@
       margin-bottom: 12px;
     }
     .divider { border: none; border-top: 1px solid #f0f0f0; margin: 24px 0; }
-
     label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
     .hint { font-size: 11px; color: #bbb; margin-top: -4px; margin-bottom: 12px; }
-
     input, select {
       width: 100%; padding: 10px 14px;
       border: 1.5px solid #e8e8e8;
@@ -61,11 +58,6 @@
     }
     input:focus, select:focus { border-color: #5b4de0; }
     input::placeholder { color: #ccc; }
-
-    .row { display: flex; gap: 10px; }
-    .row > div { flex: 1; }
-
-    /* 지점 그리드 */
     .branch-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -99,8 +91,6 @@
     .check::after {
       content: '✓'; color: white; font-size: 10px; font-weight: 700;
     }
-
-    /* 선택된 지점 요약 */
     .selected-summary {
       background: #f7f6ff;
       border: 1.5px solid #dddaf8;
@@ -113,7 +103,6 @@
     }
     .selected-summary.visible { display: block; }
     .selected-summary strong { font-weight: 700; }
-
     button {
       width: 100%; padding: 14px;
       background: #5b4de0; color: white;
@@ -124,7 +113,6 @@
     }
     button:hover { background: #4a3cc7; }
     button:disabled { background: #ccc; cursor: not-allowed; }
-
     .status {
       margin-top: 14px; padding: 12px 16px;
       border-radius: 8px; font-size: 13px;
@@ -132,7 +120,6 @@
     }
     .status.success { background: #e8f5e9; color: #2e7d32; display: block; }
     .status.error { background: #fdecea; color: #b71c1c; display: block; }
-
     .profile-preview {
       margin-top: 14px;
       background: #1e1e2e;
@@ -154,16 +141,14 @@
 <div class="card">
   <div class="badge">DEV TEST</div>
   <h2>채널톡 프로필 주입 테스트</h2>
-  <p class="subtitle">branchid · contractid를 고객 프로필에 주입하고 채팅을 열어요.</p>
+  <p class="subtitle">branchid · contractid를 고객 프로필에 주입하고 워크플로우로 이동해요.</p>
 
-  <!-- 지점 선택 -->
   <div class="section-title">지점 선택 (branchid)</div>
   <div class="branch-grid" id="branchGrid"></div>
   <div class="selected-summary" id="selectedSummary"></div>
 
   <hr class="divider">
 
-  <!-- contractid -->
   <div class="section-title">계약 정보</div>
   <label>contractid</label>
   <p class="hint">입주자별 고유 계약 ID. 고총무에서 확인.</p>
@@ -172,7 +157,10 @@
   <label>테스트 고객 이름 <span style="color:#bbb;font-weight:400">(선택)</span></label>
   <input type="text" id="userName" placeholder="예: 테스트입주자" />
 
-  <!-- 프로필 미리보기 -->
+  <label>워크플로우 URL</label>
+  <p class="hint">채널톡 대시보드 → 워크플로우 → 해당 지점 링크</p>
+  <input type="text" id="workflowUrl" placeholder="https://gochongmu-management.channel.io/workflows/..." />
+
   <div class="profile-preview" id="profilePreview"></div>
 
   <button onclick="initAndOpen()" id="openBtn">채널톡 열기</button>
@@ -180,10 +168,8 @@
 </div>
 
 <script>
-  // ── 채널톡 Plugin Key (고정) ─────────────────────────────────
   const PLUGIN_KEY = '7a082bba-9312-490d-9ddc-fa89524de5f4';
 
-  // ── 지점 목록 (추가/수정 시 여기만 편집) ──────────────────────
   const BRANCHES = [
     { id: 45, name: '공감맨션' },
     { id: 33, name: '픽셀하우스 봉천점' },
@@ -193,11 +179,9 @@
     { id: 59, name: '아더포레 신촌점' },
     { id: 68, name: '스르르스테이 동두천점' },
   ];
-  // ────────────────────────────────────────────────────────────────
 
   let selectedBranchId = null;
 
-  // 지점 그리드 렌더링
   const grid = document.getElementById('branchGrid');
   BRANCHES.forEach(branch => {
     const item = document.createElement('div');
@@ -216,7 +200,6 @@
     document.querySelectorAll('.branch-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     selectedBranchId = id;
-
     const summary = document.getElementById('selectedSummary');
     summary.className = 'selected-summary visible';
     summary.innerHTML = `선택된 지점: <strong>${name}</strong> (branchid: <strong>${id}</strong>)`;
@@ -227,24 +210,17 @@
     const contractId = document.getElementById('contractId').value.trim();
     const userName = document.getElementById('userName').value.trim();
     const preview = document.getElementById('profilePreview');
-
-    if (!selectedBranchId && !contractId) {
-      preview.className = 'profile-preview';
-      return;
-    }
-
+    if (!selectedBranchId && !contractId) { preview.className = 'profile-preview'; return; }
     const profile = {};
     if (selectedBranchId) profile.branchid = selectedBranchId;
     if (contractId) profile.contractid = contractId;
     if (userName) profile.name = userName;
-
     let html = `<span class="json-key">profile</span>: {\n`;
     Object.entries(profile).forEach(([k, v]) => {
       const isNum = typeof v === 'number';
       html += `  <span class="json-key">"${k}"</span>: <span class="${isNum ? 'json-num' : 'json-val'}">${isNum ? v : '"' + v + '"'}</span>\n`;
     });
     html += `}`;
-
     preview.className = 'profile-preview visible';
     preview.innerHTML = html;
   }
@@ -252,12 +228,12 @@
   document.getElementById('contractId').addEventListener('input', updatePreview);
   document.getElementById('userName').addEventListener('input', updatePreview);
 
-  // 채널톡 스크립트 로드
   (function(){var w=window;if(w.ChannelIO){return;}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement('script');s.type='text/javascript';s.async=true;s.src='https://cdn.channel.io/plugin/ch-plugin-web.js';var x=document.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}if(document.readyState==='complete'){l();}else{w.addEventListener('DOMContentLoaded',l);w.addEventListener('load',l);}})();
 
   function initAndOpen() {
     const contractId = document.getElementById('contractId').value.trim();
     const userName = document.getElementById('userName').value.trim();
+    const workflowUrl = document.getElementById('workflowUrl').value.trim();
     const status = document.getElementById('status');
 
     if (!selectedBranchId) {
@@ -265,12 +241,16 @@
       status.textContent = '⚠️ 지점을 선택해주세요.';
       return;
     }
+    if (!workflowUrl) {
+      status.className = 'status error';
+      status.textContent = '⚠️ 워크플로우 URL을 입력해주세요.';
+      return;
+    }
 
     const profile = { branchid: selectedBranchId };
     if (contractId) profile.contractid = contractId;
     if (userName) profile.name = userName;
 
-    // 기존 boot 초기화 후 재실행
     ChannelIO('shutdown');
     ChannelIO('boot', { pluginKey: PLUGIN_KEY, profile }, function(error, user) {
       if (error) {
@@ -279,13 +259,11 @@
       } else {
         const branchName = BRANCHES.find(b => b.id === selectedBranchId)?.name;
         status.className = 'status success';
-        status.innerHTML = `✅ boot 성공!<br>지점: ${branchName} (branchid: ${selectedBranchId})${contractId ? '<br>contractid: ' + contractId : ''}`;
-        ChannelIO('showMessenger');
+        status.innerHTML = `✅ boot 성공!<br>지점: ${branchName} (branchid: ${selectedBranchId})${contractId ? '<br>contractid: ' + contractId : ''}<br>워크플로우로 이동 중...`;
+        setTimeout(() => { window.location.href = workflowUrl; }, 800);
       }
     });
   }
 </script>
-
-<!-- 채널톡 부트 스크립트 -->
 </body>
 </html>
