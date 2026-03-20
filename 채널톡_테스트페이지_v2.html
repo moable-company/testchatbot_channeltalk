@@ -32,4 +32,253 @@
       font-weight: 700;
       padding: 3px 10px;
       border-radius: 20px;
-      margin-bottom: 10px
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    h2 { margin: 0 0 4px; font-size: 20px; color: #1a1a1a; }
+    .subtitle { margin: 0 0 28px; font-size: 13px; color: #999; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #bbb;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 24px 0; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+    .hint { font-size: 11px; color: #bbb; margin-top: -4px; margin-bottom: 12px; }
+    input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px; font-size: 14px;
+      margin-bottom: 16px; outline: none;
+      transition: border-color 0.2s;
+      color: #1a1a1a;
+    }
+    input:focus { border-color: #5b4de0; }
+    input::placeholder { color: #ccc; }
+    .branch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .branch-item {
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .branch-item:hover { border-color: #b8b0f5; background: #faf9ff; }
+    .branch-item.selected { border-color: #5b4de0; background: #f0eeff; }
+    .branch-item .branch-id { font-size: 10px; font-weight: 700; color: #5b4de0; margin-bottom: 2px; }
+    .branch-item .branch-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+    .branch-item .check {
+      position: absolute; top: 8px; right: 8px;
+      width: 16px; height: 16px;
+      background: #5b4de0; border-radius: 50%;
+      display: none; align-items: center; justify-content: center;
+    }
+    .branch-item.selected .check { display: flex; }
+    .check::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; }
+    .selected-summary {
+      background: #f7f6ff;
+      border: 1.5px solid #dddaf8;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #5b4de0;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .selected-summary.visible { display: block; }
+    .selected-summary strong { font-weight: 700; }
+    .btn {
+      width: 100%; padding: 14px;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary { background: #5b4de0; color: white; }
+    .btn-primary:hover { background: #4a3cc7; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-success { background: #2e7d32; color: white; display: none; }
+    .btn-success:hover { background: #1b5e20; }
+    .status {
+      margin-top: 14px; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px;
+      display: none; line-height: 1.5;
+    }
+    .status.success { background: #e8f5e9; color: #2e7d32; display: block; }
+    .status.error { background: #fdecea; color: #b71c1c; display: block; }
+    .profile-preview {
+      margin-top: 14px;
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12px;
+      color: #a9b1d6;
+      font-family: 'Menlo', 'Monaco', monospace;
+      display: none;
+      line-height: 1.7;
+    }
+    .profile-preview.visible { display: block; }
+    .json-key { color: #7aa2f7; }
+    .json-val { color: #9ece6a; }
+    .json-num { color: #ff9e64; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="badge">DEV TEST</div>
+  <h2>채널톡 프로필 주입 테스트</h2>
+  <p class="subtitle">branchid · contractid를 고객 프로필에 주입하고 채팅을 열어요.</p>
+
+  <div class="section-title">지점 선택 (branchid)</div>
+  <div class="branch-grid" id="branchGrid"></div>
+  <div class="selected-summary" id="selectedSummary"></div>
+
+  <hr class="divider">
+
+  <div class="section-title">계약 정보</div>
+  <label>contractid</label>
+  <p class="hint">입주자별 고유 계약 ID. 고총무에서 확인.</p>
+  <input type="text" id="contractId" placeholder="예: 12345" />
+
+  <label>테스트 고객 이름 <span style="color:#bbb;font-weight:400">(선택)</span></label>
+  <input type="text" id="userName" placeholder="예: 테스트입주자" />
+
+  <label>워크플로우 URL</label>
+  <p class="hint">지점 선택 시 자동 입력됩니다. URL이 없는 지점은 직접 입력해주세요.</p>
+  <input type="text" id="workflowUrl" placeholder="https://gochongmu-management.channel.io/workflows/..." />
+
+  <div class="profile-preview" id="profilePreview"></div>
+
+  <button class="btn btn-primary" id="bootBtn" onclick="bootProfile()">① 프로필 주입</button>
+  <div class="status" id="status"></div>
+  <button class="btn btn-success" id="chatBtn" onclick="goWorkflow()">② 💬 채팅창 열기 (profile 확인용)</button>
+</div>
+
+<script>
+  const PLUGIN_KEY = '7a082bba-9312-490d-9ddc-fa89524de5f4';
+
+  // 지점 목록 (추가/수정 시 여기만 편집)
+  const BRANCHES = [
+    { id: 45, name: '공감맨션',             url: 'https://gochongmu-management.channel.io/workflows/819670' },
+    { id: 33, name: '픽셀하우스 봉천점',    url: '' },
+    { id: 40, name: '휴먼하우스',           url: '' },
+    { id: 34, name: '삼정스테이',           url: '' },
+    { id: 53, name: '스테이23 교대점',      url: '' },
+    { id: 59, name: '아더포레 신촌점',      url: '' },
+    { id: 68, name: '스르르스테이 동두천점', url: '' },
+  ];
+
+  let selectedBranchId = null;
+  let _workflowUrl = '';
+
+  const grid = document.getElementById('branchGrid');
+  BRANCHES.forEach(branch => {
+    const item = document.createElement('div');
+    item.className = 'branch-item';
+    item.dataset.id = branch.id;
+    item.innerHTML = `
+      <div class="branch-id">ID: ${branch.id}</div>
+      <div class="branch-name">${branch.name}</div>
+      <div class="check"></div>
+    `;
+    item.addEventListener('click', () => selectBranch(branch.id, branch.name, item));
+    grid.appendChild(item);
+  });
+
+  function selectBranch(id, name, el) {
+    document.querySelectorAll('.branch-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedBranchId = id;
+    const summary = document.getElementById('selectedSummary');
+    summary.className = 'selected-summary visible';
+    summary.innerHTML = `선택된 지점: <strong>${name}</strong> (branchid: <strong>${id}</strong>)`;
+    const branch = BRANCHES.find(b => b.id === id);
+    document.getElementById('workflowUrl').value = branch?.url || '';
+    document.getElementById('chatBtn').style.display = 'none';
+    document.getElementById('status').style.display = 'none';
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const contractId = document.getElementById('contractId').value.trim();
+    const userName = document.getElementById('userName').value.trim();
+    const preview = document.getElementById('profilePreview');
+    if (!selectedBranchId && !contractId) { preview.className = 'profile-preview'; return; }
+    const profile = {};
+    if (selectedBranchId) profile.branchid = selectedBranchId;
+    if (contractId) profile.contractid = contractId;
+    if (userName) profile.name = userName;
+    let html = `<span class="json-key">profile</span>: {\n`;
+    Object.entries(profile).forEach(([k, v]) => {
+      const isNum = typeof v === 'number';
+      html += `  <span class="json-key">"${k}"</span>: <span class="${isNum ? 'json-num' : 'json-val'}">${isNum ? v : '"' + v + '"'}</span>\n`;
+    });
+    html += `}`;
+    preview.className = 'profile-preview visible';
+    preview.innerHTML = html;
+  }
+
+  document.getElementById('contractId').addEventListener('input', updatePreview);
+  document.getElementById('userName').addEventListener('input', updatePreview);
+
+  (function(){var w=window;if(w.ChannelIO){return;}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement('script');s.type='text/javascript';s.async=true;s.src='https://cdn.channel.io/plugin/ch-plugin-web.js';var x=document.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}if(document.readyState==='complete'){l();}else{w.addEventListener('DOMContentLoaded',l);w.addEventListener('load',l);}})();
+
+  function bootProfile() {
+    const contractId = document.getElementById('contractId').value.trim();
+    const userName = document.getElementById('userName').value.trim();
+    _workflowUrl = document.getElementById('workflowUrl').value.trim();
+    const status = document.getElementById('status');
+    const bootBtn = document.getElementById('bootBtn');
+    const chatBtn = document.getElementById('chatBtn');
+
+    if (!selectedBranchId) {
+      status.className = 'status error';
+      status.textContent = '⚠️ 지점을 선택해주세요.';
+      return;
+    }
+    if (!_workflowUrl) {
+      status.className = 'status error';
+      status.textContent = '⚠️ 워크플로우 URL을 입력해주세요.';
+      return;
+    }
+
+    const profile = { branchid: selectedBranchId };
+    if (contractId) profile.contractid = contractId;
+    if (userName) profile.name = userName;
+
+    bootBtn.disabled = true;
+    bootBtn.textContent = '주입 중...';
+    chatBtn.style.display = 'none';
+    status.style.display = 'none';
+
+    ChannelIO('shutdown');
+    ChannelIO('boot', { pluginKey: PLUGIN_KEY, profile }, function(error, user) {
+      bootBtn.disabled = false;
+      bootBtn.textContent = '① 프로필 주입';
+      if (error) {
+        status.className = 'status error';
+        status.textContent = '❌ 오류: ' + JSON.stringify(error);
+      } else {
+        const branchName = BRANCHES.find(b => b.id === selectedBranchId)?.name;
+        status.className = 'status success';
+        status.innerHTML = `✅ 프로필 주입 완료!<br>지점: ${branchName} (branchid: ${selectedBranchId})${contractId ? '<br>contractid: ' + contractId : ''}<br>아래 버튼을 눌러 채팅을 시작하세요.`;
+        chatBtn.style.display = 'block';
+      }
+    });
+  }
+
+  function goWorkflow() {
+    ChannelIO('showMessenger');
+  }
+</script>
+</body>
+</html>
