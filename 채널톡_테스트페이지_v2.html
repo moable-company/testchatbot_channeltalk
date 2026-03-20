@@ -74,13 +74,8 @@
     }
     .branch-item:hover { border-color: #b8b0f5; background: #faf9ff; }
     .branch-item.selected { border-color: #5b4de0; background: #f0eeff; }
-    .branch-item .branch-id {
-      font-size: 10px; font-weight: 700;
-      color: #5b4de0; margin-bottom: 2px;
-    }
-    .branch-item .branch-name {
-      font-size: 13px; font-weight: 600; color: #1a1a1a;
-    }
+    .branch-item .branch-id { font-size: 10px; font-weight: 700; color: #5b4de0; margin-bottom: 2px; }
+    .branch-item .branch-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
     .branch-item .check {
       position: absolute; top: 8px; right: 8px;
       width: 16px; height: 16px;
@@ -101,15 +96,18 @@
     }
     .selected-summary.visible { display: block; }
     .selected-summary strong { font-weight: 700; }
-    button {
+    .btn {
       width: 100%; padding: 14px;
-      background: #5b4de0; color: white;
       border: none; border-radius: 10px;
       font-size: 15px; font-weight: 700;
       cursor: pointer; transition: background 0.2s;
-      margin-top: 4px;
+      margin-top: 8px;
     }
-    button:hover { background: #4a3cc7; }
+    .btn-primary { background: #5b4de0; color: white; }
+    .btn-primary:hover { background: #4a3cc7; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-success { background: #2e7d32; color: white; display: none; }
+    .btn-success:hover { background: #1b5e20; }
     .status {
       margin-top: 14px; padding: 12px 16px;
       border-radius: 8px; font-size: 13px;
@@ -160,14 +158,15 @@
 
   <div class="profile-preview" id="profilePreview"></div>
 
-  <button onclick="initAndOpen()">채널톡 열기</button>
+  <button class="btn btn-primary" id="bootBtn" onclick="bootProfile()">① 프로필 주입</button>
   <div class="status" id="status"></div>
+  <button class="btn btn-success" id="chatBtn" onclick="goWorkflow()">② 💬 채팅 시작하기</button>
 </div>
 
 <script>
   const PLUGIN_KEY = '7a082bba-9312-490d-9ddc-fa89524de5f4';
 
-  // ── 지점 목록 (추가/수정 시 여기만 편집) ──────────────────────
+  // 지점 목록 (추가/수정 시 여기만 편집)
   const BRANCHES = [
     { id: 45, name: '공감맨션',             url: 'https://gochongmu-management.channel.io/workflows/819670' },
     { id: 33, name: '픽셀하우스 봉천점',    url: '' },
@@ -177,9 +176,9 @@
     { id: 59, name: '아더포레 신촌점',      url: '' },
     { id: 68, name: '스르르스테이 동두천점', url: '' },
   ];
-  // ────────────────────────────────────────────────────────────────
 
   let selectedBranchId = null;
+  let _workflowUrl = '';
 
   const grid = document.getElementById('branchGrid');
   BRANCHES.forEach(branch => {
@@ -204,6 +203,8 @@
     summary.innerHTML = `선택된 지점: <strong>${name}</strong> (branchid: <strong>${id}</strong>)`;
     const branch = BRANCHES.find(b => b.id === id);
     document.getElementById('workflowUrl').value = branch?.url || '';
+    document.getElementById('chatBtn').style.display = 'none';
+    document.getElementById('status').style.display = 'none';
     updatePreview();
   }
 
@@ -231,18 +232,20 @@
 
   (function(){var w=window;if(w.ChannelIO){return;}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement('script');s.type='text/javascript';s.async=true;s.src='https://cdn.channel.io/plugin/ch-plugin-web.js';var x=document.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}if(document.readyState==='complete'){l();}else{w.addEventListener('DOMContentLoaded',l);w.addEventListener('load',l);}})();
 
-  function initAndOpen() {
+  function bootProfile() {
     const contractId = document.getElementById('contractId').value.trim();
     const userName = document.getElementById('userName').value.trim();
-    const workflowUrl = document.getElementById('workflowUrl').value.trim();
+    _workflowUrl = document.getElementById('workflowUrl').value.trim();
     const status = document.getElementById('status');
+    const bootBtn = document.getElementById('bootBtn');
+    const chatBtn = document.getElementById('chatBtn');
 
     if (!selectedBranchId) {
       status.className = 'status error';
       status.textContent = '⚠️ 지점을 선택해주세요.';
       return;
     }
-    if (!workflowUrl) {
+    if (!_workflowUrl) {
       status.className = 'status error';
       status.textContent = '⚠️ 워크플로우 URL을 입력해주세요.';
       return;
@@ -252,18 +255,29 @@
     if (contractId) profile.contractid = contractId;
     if (userName) profile.name = userName;
 
+    bootBtn.disabled = true;
+    bootBtn.textContent = '주입 중...';
+    chatBtn.style.display = 'none';
+    status.style.display = 'none';
+
     ChannelIO('shutdown');
     ChannelIO('boot', { pluginKey: PLUGIN_KEY, profile }, function(error, user) {
+      bootBtn.disabled = false;
+      bootBtn.textContent = '① 프로필 주입';
       if (error) {
         status.className = 'status error';
         status.textContent = '❌ 오류: ' + JSON.stringify(error);
       } else {
         const branchName = BRANCHES.find(b => b.id === selectedBranchId)?.name;
         status.className = 'status success';
-        status.innerHTML = `✅ boot 성공!<br>지점: ${branchName} (branchid: ${selectedBranchId})${contractId ? '<br>contractid: ' + contractId : ''}<br>워크플로우로 이동 중...`;
-        setTimeout(() => { window.location.href = workflowUrl; }, 800);
+        status.innerHTML = `✅ 프로필 주입 완료!<br>지점: ${branchName} (branchid: ${selectedBranchId})${contractId ? '<br>contractid: ' + contractId : ''}<br>아래 버튼을 눌러 채팅을 시작하세요.`;
+        chatBtn.style.display = 'block';
       }
     });
+  }
+
+  function goWorkflow() {
+    window.location.href = _workflowUrl;
   }
 </script>
 </body>
